@@ -13,7 +13,7 @@ app.post("/chat", async (req, res) => {
 
   try {
     const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2",
+      "https://router.huggingface.co/inference/models/mistralai/Mistral-7B-Instruct-v0.2",
       {
         method: "POST",
         headers: {
