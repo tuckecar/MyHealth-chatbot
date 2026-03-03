@@ -25,6 +25,7 @@ app.post("/chat", async (req, res) => {
       ],
     });
 
+    console.log("AI RESPONSE:", completion.choices[0].message.content);
     res.json({ reply: completion.choices[0].message.content });
   } catch (error) {
     console.error(error);
