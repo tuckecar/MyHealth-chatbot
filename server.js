@@ -13,18 +13,18 @@ app.post("/chat", async (req, res) => {
 
   try {
     const response = await fetch(
-      "https://router.huggingface.co/inference/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.HF_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inputs: `<s>[INST] You are a helpful health assistant. ${message} [/INST]`,
-        }),
-      }
-    );
+  "https://api-inference.huggingface.co/models/google/flan-t5-large",
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.HF_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      inputs: `You are a helpful health assistant. ${message}`,
+    }),
+  }
+);
 
     // Read as text first (safer)
     const rawText = await response.text();
