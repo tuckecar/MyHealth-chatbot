@@ -1,17 +1,17 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-// import fetch from "node-fetch"; // Uncomment this if you are on Node v16 or lower
 
+// Load environment variables from .env
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Check for API key on startup
+// Critical: Check if the API Key exists before the server starts
 if (!process.env.GEMINI_API_KEY) {
-  console.error("FATAL ERROR: GEMINI_API_KEY is not defined in environment variables.");
+  console.error("❌ ERROR: GEMINI_API_KEY is missing from your environment variables!");
 }
 
 app.post("/chat", async (req, res) => {
@@ -21,36 +21,56 @@ app.post("/chat", async (req, res) => {
     return res.status(400).json({ reply: "Error: No message provided." });
   }
 
+  console.log("📩 Incoming message:", message);
+
   try {
-    const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;   
-     
+    // UPDATED: Using the Gemini 3 Flash Preview model name and v1beta endpoint
+    const modelId = "gemini-3-flash-preview"; 
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `You are a helpful health assistant. Respond briefly.\n\nUser: ${message}` }] }]
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `You are a helpful health assistant. Respond clearly and briefly.\n\nUser: ${message}` }]
+          }
+        ],
+        // Optional: Adding generation config for better stability
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500,
+        }
       })
     });
 
     const data = await response.json();
 
-    // If Google returns an error (like 400 or 429), catch it here
+    // Check if the Google API returned an error
     if (data.error) {
-      console.error("Google API Error:", data.error);
-      return res.status(data.error.code || 500).json({ reply: "AI Error: " + data.error.message });
+      console.error("❌ Google API Error:", data.error.message);
+      return res.status(data.error.code || 500).json({ 
+        reply: "The AI is currently unavailable.",
+        debug: data.error.message 
+      });
     }
 
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't generate a response.";
+    // Extract the text safely from the new Gemini 3 response structure
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that.";
+    
+    console.log("🤖 Gemini Response Sent.");
     res.json({ reply });
 
   } catch (error) {
-    console.error("Server Crash Error:", error);
-    res.status(500).json({ reply: "Server internal error." });
+    console.error("❌ Server Crash Error:", error.message);
+    res.status(500).json({ reply: "Internal server error." });
   }
 });
 
+// Use Render's dynamic port or default to 3000 for local testing
 const PORT = process.env.PORT || 3000;
-// Using "0.0.0.0" is essential for Render to map the internal port correctly
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server is live on port ${PORT}`);
 });
