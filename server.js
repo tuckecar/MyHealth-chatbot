@@ -14,18 +14,24 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
+  if (!message) {
+    return res.json({ reply: "Please enter a message." });
+  }
+
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash-latest",
+    });
 
     const result = await model.generateContent(
-      `You are a helpful health assistant. ${message}`
+      `You are a helpful health assistant. Answer clearly and briefly.\n\nUser: ${message}`
     );
 
     const reply = result.response.text();
 
     res.json({ reply });
   } catch (error) {
-    console.error(error);
+    console.error("Gemini error:", error);
     res.status(500).json({ reply: "AI service unavailable." });
   }
 });
