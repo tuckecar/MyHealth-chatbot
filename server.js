@@ -19,9 +19,7 @@ app.post("/chat", async (req, res) => {
   }
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-    });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-002" });
 
     const result = await model.generateContent(
       `You are a helpful health assistant. Answer clearly and briefly.\n\nUser: ${message}`
