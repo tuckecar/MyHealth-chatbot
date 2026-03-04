@@ -11,20 +11,22 @@ app.use(express.json());
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
+  console.log("Incoming message:", message);
+
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           contents: [
             {
               parts: [
                 {
-                  text: `You are a helpful health assistant. Answer clearly and briefly.\n\nUser: ${message}`
+                  text: `You are a helpful health assistant.\n\nUser: ${message}`
                 }
               ]
             }
@@ -35,9 +37,11 @@ app.post("/chat", async (req, res) => {
 
     const data = await response.json();
 
+    console.log("Gemini response:", data);
+
     const reply =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response from AI.";
+      "No response from model.";
 
     res.json({ reply });
 
