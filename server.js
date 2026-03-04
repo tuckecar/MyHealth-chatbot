@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
@@ -8,50 +9,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
   try {
-    const response = await fetch(
-  "https://api-inference.huggingface.co/models/google/flan-t5-large",
-  {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.HF_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      inputs: `You are a helpful health assistant. ${message}`,
-    }),
-  }
-);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Read as text first (safer)
-    const rawText = await response.text();
+    const result = await model.generateContent(
+      `You are a helpful health assistant. ${message}`
+    );
 
-    // Try to parse JSON safely
-    let data;
-    try {
-      data = JSON.parse(rawText);
-    } catch (parseError) {
-      console.error("HF returned non-JSON:", rawText);
-      return res.json({ reply: "Model is loading or unavailable." });
-    }
+    const reply = result.response.text();
 
-    console.log("HF RESPONSE:", data);
-
-    // Handle error responses
-    if (data.error) {
-      console.error("HF ERROR:", data.error);
-      return res.json({ reply: "Model is loading. Try again in a few seconds." });
-    }
-
-    const aiReply =
-      data?.[0]?.generated_text || "No response from model.";
-
-    res.json({ reply: aiReply });
+    res.json({ reply });
   } catch (error) {
-    console.error("FULL ERROR:", error);
+    console.error(error);
     res.status(500).json({ reply: "AI service unavailable." });
   }
 });
